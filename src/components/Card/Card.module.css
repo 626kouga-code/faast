@@ -1,0 +1,43 @@
+.card {
+  background: white;
+  border-radius: 4px;
+  padding: 8px 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.card:hover {
+  background: #f4f5f7;
+}
+
+.labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.labelChip {
+  color: white;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.title {
+  font-size: 14px;
+  color: #172b4d;
+  word-break: break-word;
+}
+
+.dueDate {
+  font-size: 11px;
+  color: #666;
+}
+
+.overdue {
+  color: #eb5a46;
+  font-weight: 600;
+}

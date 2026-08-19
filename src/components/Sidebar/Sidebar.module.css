@@ -1,0 +1,88 @@
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: #1d2733;
+  color: #eee;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.heading {
+  font-size: 14px;
+  text-transform: uppercase;
+  color: #9fb3c8;
+  margin: 0;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.list li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.boardButton {
+  flex: 1;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: #eee;
+  padding: 8px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.boardButton:hover {
+  background: #2c3947;
+}
+
+.boardButton.active {
+  background: #0079bf;
+}
+
+.deleteButton {
+  background: transparent;
+  border: none;
+  color: #9fb3c8;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px 6px;
+}
+
+.deleteButton:hover {
+  color: #eb5a46;
+}
+
+.addBoard {
+  display: flex;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.addBoard input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: none;
+}
+
+.addBoard button {
+  background: #0079bf;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+}

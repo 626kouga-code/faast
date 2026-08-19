@@ -1,0 +1,61 @@
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.labelList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.labelChip {
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+  flex: 1;
+  text-align: left;
+}
+
+.removeLabel {
+  background: transparent;
+  border: none;
+  color: #999;
+  cursor: pointer;
+}
+
+.removeLabel:hover {
+  color: #eb5a46;
+}
+
+.newLabel {
+  display: flex;
+  gap: 6px;
+}
+
+.newLabel input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.newLabel button {
+  background: #0079bf;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
