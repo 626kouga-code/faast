@@ -32,3 +32,12 @@
 
 - 「マージ後にheadブランチを自動削除」を有効化済み（`gh api -X PATCH repos/<owner>/<repo> -f delete_branch_on_merge=true`）。
 - PRで `closes #issue番号` と書けば、マージ時にIssueが自動でcloseされる。
+
+## 開発サーバーのポート固定ルール
+
+このプロジェクトのフロント/バックエンド開発サーバーは以下のポートに固定する。
+
+- フロントエンド（Vite）: `5173`（[vite.config.ts](vite.config.ts) で `server.port: 5173` / `server.strictPort: true` を設定済み。ポートが埋まっている場合、Viteは別ポートへ自動移動せず起動失敗する）
+- バックエンド（Spring Boot）: `8080`（[backend/src/main/resources/application.properties](backend/src/main/resources/application.properties) の `server.port=8080` で固定。同様に自動フォールバックしない）
+
+Claude Codeがこれらのdevサーバーを起動・再起動する際は、必ず [.claude/skills/dev-server-ports/SKILL.md](.claude/skills/dev-server-ports/SKILL.md) のルールに従うこと（ポート競合時に別ポートへ逃がさない、既存プロセスの扱い方など）。
