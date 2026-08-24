@@ -26,6 +26,8 @@ public class Card {
 
     private LocalDate dueDate;
 
+    private Double position;
+
     public Card() {
     }
 
@@ -75,5 +77,13 @@ public class Card {
 
     public void setDueDate(LocalDate dueDate) {
         this.dueDate = dueDate;
+    }
+
+    public Double getPosition() {
+        return position;
+    }
+
+    public void setPosition(Double position) {
+        this.position = position;
     }
 }

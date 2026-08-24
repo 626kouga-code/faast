@@ -4,31 +4,25 @@ export interface Label {
   color: string
 }
 
-export interface Card {
-  id: string
-  title: string
-  description?: string
-  labelIds: string[]
-  dueDate?: string
-}
-
 export interface List {
   id: string
+  backendId: number
   title: string
-  cardIds: string[]
 }
 
 export interface Board {
   id: string
+  backendId: number
   title: string
   lists: Record<string, List>
   listOrder: string[]
-  cards: Record<string, Card>
   labels: Record<string, Label>
+  cardLabelIds: Record<number, string[]>
 }
 
 export interface AppState {
   boards: Record<string, Board>
   boardOrder: string[]
   activeBoardId: string | null
+  nextBackendId: number
 }

@@ -1,11 +1,12 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { Board, Card as CardType } from '../../types'
+import type { ApiCard } from '../../api/cards'
+import type { Board } from '../../types'
 import styles from './Card.module.css'
 
 interface CardProps {
   board: Board
-  card: CardType
+  card: ApiCard
   onOpen: () => void
 }
 
@@ -17,7 +18,7 @@ function isOverdue(dueDate: string): boolean {
 
 export function Card({ board, card, onOpen }: CardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: card.id,
+    id: String(card.id),
     data: { type: 'card' },
   })
 
@@ -27,7 +28,8 @@ export function Card({ board, card, onOpen }: CardProps) {
     opacity: isDragging ? 0.5 : 1,
   }
 
-  const labels = card.labelIds.map((id) => board.labels[id]).filter(Boolean)
+  const labelIds = board.cardLabelIds[card.id] ?? []
+  const labels = labelIds.map((id) => board.labels[id]).filter(Boolean)
 
   return (
     <div
