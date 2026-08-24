@@ -9,6 +9,7 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, horizontalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { useBoardContext } from '../../context/BoardContext'
+import { useBackendCards } from '../../hooks/useBackendCards'
 import { List } from '../List/List'
 import { CardModal } from '../CardModal/CardModal'
 import { SearchBar } from '../SearchBar/SearchBar'
@@ -21,9 +22,12 @@ interface BoardProps {
 
 export function Board({ board }: BoardProps) {
   const { dispatch } = useBoardContext()
+  const { cards, loading, error, addCard, editCard, removeCard, moveCard } = useBackendCards(
+    board.backendId,
+  )
   const [isAddingList, setIsAddingList] = useState(false)
   const [newListTitle, setNewListTitle] = useState('')
-  const [openCardId, setOpenCardId] = useState<string | null>(null)
+  const [openCardId, setOpenCardId] = useState<number | null>(null)
   const [search, setSearch] = useState('')
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState(board.title)
@@ -48,24 +52,22 @@ export function Board({ board }: BoardProps) {
   )
 
   const query = search.trim().toLowerCase()
-  const visibleCardIdsByList: Record<string, string[]> = {}
+  const cardsByListId: Record<number, typeof cards> = {}
   for (const listId of board.listOrder) {
     const list = board.lists[listId]
     if (!list) continue
-    visibleCardIdsByList[listId] = query
-      ? list.cardIds.filter((cardId) => {
-          const card = board.cards[cardId]
-          if (!card) return false
-          return (
+    const listCards = cards
+      .filter((card) => card.listId === list.backendId)
+      .sort((a, b) => a.position - b.position)
+    cardsByListId[list.backendId] = query
+      ? listCards.filter(
+          (card) =>
             card.title.toLowerCase().includes(query) ||
-            (card.description ?? '').toLowerCase().includes(query)
-          )
-        })
-      : list.cardIds
-  }
+            (card.description ?? '').toLowerCase().includes(query),
+        )
+      : listCards
 
-  const findListIdForCard = (cardId: string): string | undefined =>
-    board.listOrder.find((listId) => board.lists[listId]?.cardIds.includes(cardId))
+  }
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
@@ -90,34 +92,27 @@ export function Board({ board }: BoardProps) {
     }
 
     if (activeType === 'card') {
-      const cardId = String(active.id)
-      const fromListId = findListIdForCard(cardId)
-      if (!fromListId) return
+      const cardId = Number(active.id)
+      const card = cards.find((c) => c.id === cardId)
+      if (!card) return
 
-      let toListId: string
+      let toListBackendId: number
       let toIndex: number
 
       if (overType === 'card') {
-        const overCardId = String(over.id)
-        toListId = findListIdForCard(overCardId) ?? fromListId
-        const toList = board.lists[toListId]
-        toIndex = toList ? toList.cardIds.indexOf(overCardId) : 0
+        const overCard = cards.find((c) => String(c.id) === String(over.id))
+        if (!overCard) return
+        toListBackendId = overCard.listId
+        const toListCards = cardsByListId[toListBackendId] ?? []
+        toIndex = toListCards.findIndex((c) => c.id === overCard.id)
       } else {
-        toListId = String(over.id)
-        const toList = board.lists[toListId]
-        toIndex = toList ? toList.cardIds.length : 0
+        const toList = board.lists[String(over.id)]
+        if (!toList) return
+        toListBackendId = toList.backendId
+        toIndex = (cardsByListId[toListBackendId] ?? []).length
       }
 
-      if (!board.lists[toListId]) return
-
-      dispatch({
-        type: 'MOVE_CARD',
-        boardId: board.id,
-        cardId,
-        fromListId,
-        toListId,
-        toIndex,
-      })
+      moveCard(card, toListBackendId, toIndex).catch(() => {})
     }
   }
 
@@ -131,7 +126,7 @@ export function Board({ board }: BoardProps) {
     setNewListTitle('')
   }
 
-  const openCard = openCardId ? board.cards[openCardId] : null
+  const openCard = openCardId !== null ? cards.find((c) => c.id === openCardId) : null
 
   return (
     <div className={styles.boardWrapper}>
@@ -154,6 +149,8 @@ export function Board({ board }: BoardProps) {
         )}
         <SearchBar value={search} onChange={setSearch} />
       </div>
+      {loading && <div className={styles.status}>バックエンドから読み込み中...</div>}
+      {error && <div className={styles.status}>{error}</div>}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <div className={styles.lists}>
           <SortableContext items={board.listOrder} strategy={horizontalListSortingStrategy}>
@@ -165,8 +162,9 @@ export function Board({ board }: BoardProps) {
                   key={list.id}
                   board={board}
                   list={list}
-                  visibleCardIds={visibleCardIdsByList[listId] ?? []}
+                  cards={cardsByListId[list.backendId] ?? []}
                   onOpenCard={setOpenCardId}
+                  onAddCard={addCard}
                 />
               )
             })}
@@ -206,7 +204,13 @@ export function Board({ board }: BoardProps) {
       </DndContext>
 
       {openCard && (
-        <CardModal board={board} card={openCard} onClose={() => setOpenCardId(null)} />
+        <CardModal
+          board={board}
+          card={openCard}
+          onEdit={editCard}
+          onRemove={removeCard}
+          onClose={() => setOpenCardId(null)}
+        />
       )}
     </div>
   )

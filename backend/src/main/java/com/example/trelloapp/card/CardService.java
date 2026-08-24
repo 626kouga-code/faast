@@ -23,7 +23,7 @@ public class CardService {
     }
 
     public List<Card> findByBoardId(Long boardId) {
-        return cardRepository.findByBoardId(boardId);
+        return cardRepository.findByBoardIdOrderByPositionAsc(boardId);
     }
 
     public List<Card> search(Long boardId, String keyword) {
@@ -33,5 +33,43 @@ public class CardService {
         return cardRepository
                 .findByBoardIdAndTitleContainingIgnoreCaseOrBoardIdAndDescriptionContainingIgnoreCase(
                         boardId, keyword, boardId, keyword);
+    }
+
+    public Card create(CardRequest req) {
+        Card card = new Card();
+        card.setTitle(req.getTitle().trim());
+        card.setDescription(req.getDescription());
+        card.setDueDate(req.getDueDate());
+        card.setBoardId(req.getBoardId());
+        card.setListId(req.getListId());
+        card.setPosition(req.getPosition() != null ? req.getPosition() : nextPosition(req.getBoardId(), req.getListId()));
+        return cardRepository.save(card);
+    }
+
+    public Optional<Card> update(Long id, CardRequest req) {
+        return cardRepository.findById(id).map(card -> {
+            card.setTitle(req.getTitle().trim());
+            card.setDescription(req.getDescription());
+            card.setDueDate(req.getDueDate());
+            card.setBoardId(req.getBoardId());
+            card.setListId(req.getListId());
+            card.setPosition(req.getPosition() != null ? req.getPosition() : card.getPosition());
+            return cardRepository.save(card);
+        });
+    }
+
+    public boolean delete(Long id) {
+        if (!cardRepository.existsById(id)) {
+            return false;
+        }
+        cardRepository.deleteById(id);
+        return true;
+    }
+
+    private double nextPosition(Long boardId, Long listId) {
+        return cardRepository.findByBoardIdAndListIdOrderByPositionDesc(boardId, listId).stream()
+                .findFirst()
+                .map(c -> c.getPosition() != null ? c.getPosition() + 1 : 1.0)
+                .orElse(1.0);
     }
 }

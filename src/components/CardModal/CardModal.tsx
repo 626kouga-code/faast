@@ -1,45 +1,48 @@
 import { useState } from 'react'
 import { useBoardContext } from '../../context/BoardContext'
+import type { ApiCard } from '../../api/cards'
 import { LabelPicker } from '../LabelPicker/LabelPicker'
-import type { Board, Card } from '../../types'
+import type { Board } from '../../types'
 import styles from './CardModal.module.css'
 
 interface CardModalProps {
   board: Board
-  card: Card
+  card: ApiCard
+  onEdit: (
+    card: ApiCard,
+    changes: Partial<Pick<ApiCard, 'title' | 'description' | 'dueDate'>>,
+  ) => Promise<ApiCard>
+  onRemove: (card: ApiCard) => Promise<void>
   onClose: () => void
 }
 
-export function CardModal({ board, card, onClose }: CardModalProps) {
+export function CardModal({ board, card, onEdit, onRemove, onClose }: CardModalProps) {
   const { dispatch } = useBoardContext()
   const [title, setTitle] = useState(card.title)
   const [description, setDescription] = useState(card.description ?? '')
   const [dueDate, setDueDate] = useState(card.dueDate ?? '')
 
+  const labelIds = board.cardLabelIds[card.id] ?? []
+
   const handleSave = () => {
-    dispatch({
-      type: 'UPDATE_CARD',
-      boardId: board.id,
-      cardId: card.id,
-      changes: {
-        title: title.trim() || card.title,
-        description: description.trim() || undefined,
-        dueDate: dueDate || undefined,
-      },
-    })
+    onEdit(card, {
+      title: title.trim() || card.title,
+      description: description.trim() || null,
+      dueDate: dueDate || null,
+    }).catch(() => {})
     onClose()
   }
 
   const handleToggleLabel = (labelId: string) => {
-    const labelIds = card.labelIds.includes(labelId)
-      ? card.labelIds.filter((id) => id !== labelId)
-      : [...card.labelIds, labelId]
-    dispatch({ type: 'UPDATE_CARD', boardId: board.id, cardId: card.id, changes: { labelIds } })
+    const newLabelIds = labelIds.includes(labelId)
+      ? labelIds.filter((id) => id !== labelId)
+      : [...labelIds, labelId]
+    dispatch({ type: 'SET_CARD_LABELS', boardId: board.id, cardId: card.id, labelIds: newLabelIds })
   }
 
   const handleDelete = () => {
     if (confirm('このカードを削除しますか？')) {
-      dispatch({ type: 'DELETE_CARD', boardId: board.id, cardId: card.id })
+      onRemove(card).catch(() => {})
       onClose()
     }
   }
@@ -70,7 +73,7 @@ export function CardModal({ board, card, onClose }: CardModalProps) {
         />
 
         <label className={styles.fieldLabel}>ラベル</label>
-        <LabelPicker board={board} selectedLabelIds={card.labelIds} onToggle={handleToggleLabel} />
+        <LabelPicker board={board} selectedLabelIds={labelIds} onToggle={handleToggleLabel} />
 
         <div className={styles.actions}>
           <button className={styles.deleteButton} onClick={handleDelete}>

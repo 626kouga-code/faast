@@ -4,6 +4,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { useBoardContext } from '../../context/BoardContext'
+import type { ApiCard } from '../../api/cards'
 import { Card } from '../Card/Card'
 import type { Board, List as ListType } from '../../types'
 import styles from './List.module.css'
@@ -11,11 +12,12 @@ import styles from './List.module.css'
 interface ListProps {
   board: Board
   list: ListType
-  visibleCardIds: string[]
-  onOpenCard: (cardId: string) => void
+  cards: ApiCard[]
+  onOpenCard: (cardId: number) => void
+  onAddCard: (listId: number, title: string) => Promise<ApiCard>
 }
 
-export function List({ board, list, visibleCardIds, onOpenCard }: ListProps) {
+export function List({ board, list, cards, onOpenCard, onAddCard }: ListProps) {
   const { dispatch } = useBoardContext()
   const [isAddingCard, setIsAddingCard] = useState(false)
   const [newCardTitle, setNewCardTitle] = useState('')
@@ -44,7 +46,7 @@ export function List({ board, list, visibleCardIds, onOpenCard }: ListProps) {
       setIsAddingCard(false)
       return
     }
-    dispatch({ type: 'ADD_CARD', boardId: board.id, listId: list.id, title })
+    onAddCard(list.backendId, title).catch(() => {})
     setNewCardTitle('')
   }
 
@@ -88,12 +90,10 @@ export function List({ board, list, visibleCardIds, onOpenCard }: ListProps) {
       </div>
 
       <div ref={setDroppableRef} className={styles.cards}>
-        <SortableContext items={visibleCardIds} strategy={verticalListSortingStrategy}>
-          {visibleCardIds.map((cardId) => {
-            const card = board.cards[cardId]
-            if (!card) return null
-            return <Card key={card.id} board={board} card={card} onOpen={() => onOpenCard(card.id)} />
-          })}
+        <SortableContext items={cards.map((c) => String(c.id))} strategy={verticalListSortingStrategy}>
+          {cards.map((card) => (
+            <Card key={card.id} board={board} card={card} onOpen={() => onOpenCard(card.id)} />
+          ))}
         </SortableContext>
       </div>
 

@@ -1,11 +1,15 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { createId } from '../utils/id'
-import type { AppState, Board, Card, Label } from '../types'
+import type { AppState, Board, Label, List } from '../types'
 
 const LABEL_COLORS = ['#61bd4f', '#f2d600', '#ff9f1a', '#eb5a46', '#c377e0', '#0079bf']
 
-function createSampleBoard(): Board {
+const INITIAL_NEXT_BACKEND_ID = 1000
+
+function createSampleBoard(nextBackendId: number): { board: Board; nextBackendId: number } {
+  let id = nextBackendId
+
   const labelIds = LABEL_COLORS.slice(0, 3).map(() => createId())
   const labels: Record<string, Label> = {
     [labelIds[0]]: { id: labelIds[0], name: '重要', color: LABEL_COLORS[0] },
@@ -13,38 +17,38 @@ function createSampleBoard(): Board {
     [labelIds[2]]: { id: labelIds[2], name: '要確認', color: LABEL_COLORS[2] },
   }
 
+  const boardBackendId = id++
   const listTodo = createId()
   const listDoing = createId()
   const listDone = createId()
+  const listTodoBackendId = id++
+  const listDoingBackendId = id++
+  const listDoneBackendId = id++
 
-  const card1 = createId()
-  const card2 = createId()
-
-  const cards: Record<string, Card> = {
-    [card1]: { id: card1, title: 'サンプルカード1', labelIds: [labelIds[0]] },
-    [card2]: { id: card2, title: 'サンプルカード2', labelIds: [] },
-  }
-
-  return {
+  const board: Board = {
     id: createId(),
+    backendId: boardBackendId,
     title: 'マイボード',
     lists: {
-      [listTodo]: { id: listTodo, title: 'Todo', cardIds: [card1, card2] },
-      [listDoing]: { id: listDoing, title: 'Doing', cardIds: [] },
-      [listDone]: { id: listDone, title: 'Done', cardIds: [] },
+      [listTodo]: { id: listTodo, backendId: listTodoBackendId, title: 'Todo' },
+      [listDoing]: { id: listDoing, backendId: listDoingBackendId, title: 'Doing' },
+      [listDone]: { id: listDone, backendId: listDoneBackendId, title: 'Done' },
     },
     listOrder: [listTodo, listDoing, listDone],
-    cards,
     labels,
+    cardLabelIds: {},
   }
+
+  return { board, nextBackendId: id }
 }
 
 function createEmptyState(): AppState {
-  const board = createSampleBoard()
+  const { board, nextBackendId } = createSampleBoard(INITIAL_NEXT_BACKEND_ID)
   return {
     boards: { [board.id]: board },
     boardOrder: [board.id],
     activeBoardId: board.id,
+    nextBackendId,
   }
 }
 
@@ -57,22 +61,7 @@ type Action =
   | { type: 'RENAME_LIST'; boardId: string; listId: string; title: string }
   | { type: 'DELETE_LIST'; boardId: string; listId: string }
   | { type: 'MOVE_LIST'; boardId: string; listId: string; toIndex: number }
-  | { type: 'ADD_CARD'; boardId: string; listId: string; title: string }
-  | {
-      type: 'UPDATE_CARD'
-      boardId: string
-      cardId: string
-      changes: Partial<Pick<Card, 'title' | 'description' | 'labelIds' | 'dueDate'>>
-    }
-  | { type: 'DELETE_CARD'; boardId: string; cardId: string }
-  | {
-      type: 'MOVE_CARD'
-      boardId: string
-      cardId: string
-      fromListId: string
-      toListId: string
-      toIndex: number
-    }
+  | { type: 'SET_CARD_LABELS'; boardId: string; cardId: number; labelIds: string[] }
   | { type: 'ADD_LABEL'; boardId: string; name: string; color: string }
   | { type: 'DELETE_LABEL'; boardId: string; labelId: string }
 
@@ -80,18 +69,21 @@ function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'ADD_BOARD': {
       const id = createId()
+      const backendId = state.nextBackendId
       const board: Board = {
         id,
+        backendId,
         title: action.title,
         lists: {},
         listOrder: [],
-        cards: {},
         labels: {},
+        cardLabelIds: {},
       }
       return {
         boards: { ...state.boards, [id]: board },
         boardOrder: [...state.boardOrder, id],
         activeBoardId: id,
+        nextBackendId: backendId + 1,
       }
     }
     case 'DELETE_BOARD': {
@@ -99,7 +91,7 @@ function reducer(state: AppState, action: Action): AppState {
       const boardOrder = state.boardOrder.filter((id) => id !== action.boardId)
       const activeBoardId =
         state.activeBoardId === action.boardId ? (boardOrder[0] ?? null) : state.activeBoardId
-      return { boards, boardOrder, activeBoardId }
+      return { ...state, boards, boardOrder, activeBoardId }
     }
     case 'SET_ACTIVE_BOARD':
       return { ...state, activeBoardId: action.boardId }
@@ -115,12 +107,17 @@ function reducer(state: AppState, action: Action): AppState {
       const board = state.boards[action.boardId]
       if (!board) return state
       const listId = createId()
+      const backendId = state.nextBackendId
       const newBoard: Board = {
         ...board,
-        lists: { ...board.lists, [listId]: { id: listId, title: action.title, cardIds: [] } },
+        lists: { ...board.lists, [listId]: { id: listId, backendId, title: action.title } },
         listOrder: [...board.listOrder, listId],
       }
-      return { ...state, boards: { ...state.boards, [board.id]: newBoard } }
+      return {
+        ...state,
+        boards: { ...state.boards, [board.id]: newBoard },
+        nextBackendId: backendId + 1,
+      }
     }
     case 'RENAME_LIST': {
       const board = state.boards[action.boardId]
@@ -137,13 +134,10 @@ function reducer(state: AppState, action: Action): AppState {
       const list = board?.lists[action.listId]
       if (!board || !list) return state
       const { [action.listId]: _removedList, ...lists } = board.lists
-      const cards = { ...board.cards }
-      for (const cardId of list.cardIds) delete cards[cardId]
       const newBoard: Board = {
         ...board,
         lists,
         listOrder: board.listOrder.filter((id) => id !== action.listId),
-        cards,
       }
       return { ...state, boards: { ...state.boards, [board.id]: newBoard } }
     }
@@ -155,66 +149,13 @@ function reducer(state: AppState, action: Action): AppState {
       const newBoard: Board = { ...board, listOrder: order }
       return { ...state, boards: { ...state.boards, [board.id]: newBoard } }
     }
-    case 'ADD_CARD': {
-      const board = state.boards[action.boardId]
-      const list = board?.lists[action.listId]
-      if (!board || !list) return state
-      const cardId = createId()
-      const card: Card = { id: cardId, title: action.title, labelIds: [] }
-      const newBoard: Board = {
-        ...board,
-        cards: { ...board.cards, [cardId]: card },
-        lists: {
-          ...board.lists,
-          [list.id]: { ...list, cardIds: [...list.cardIds, cardId] },
-        },
-      }
-      return { ...state, boards: { ...state.boards, [board.id]: newBoard } }
-    }
-    case 'UPDATE_CARD': {
-      const board = state.boards[action.boardId]
-      const card = board?.cards[action.cardId]
-      if (!board || !card) return state
-      const newBoard: Board = {
-        ...board,
-        cards: { ...board.cards, [card.id]: { ...card, ...action.changes } },
-      }
-      return { ...state, boards: { ...state.boards, [board.id]: newBoard } }
-    }
-    case 'DELETE_CARD': {
-      const board = state.boards[action.boardId]
-      const card = board?.cards[action.cardId]
-      if (!board || !card) return state
-      const { [action.cardId]: _removedCard, ...cards } = board.cards
-      const lists = { ...board.lists }
-      for (const listId of Object.keys(lists)) {
-        if (lists[listId].cardIds.includes(action.cardId)) {
-          lists[listId] = {
-            ...lists[listId],
-            cardIds: lists[listId].cardIds.filter((id) => id !== action.cardId),
-          }
-        }
-      }
-      const newBoard: Board = { ...board, cards, lists }
-      return { ...state, boards: { ...state.boards, [board.id]: newBoard } }
-    }
-    case 'MOVE_CARD': {
+    case 'SET_CARD_LABELS': {
       const board = state.boards[action.boardId]
       if (!board) return state
-      const fromList = board.lists[action.fromListId]
-      const toList = board.lists[action.toListId]
-      if (!fromList || !toList) return state
-
-      const fromCardIds = fromList.cardIds.filter((id) => id !== action.cardId)
-      const toCardIds =
-        action.fromListId === action.toListId ? fromCardIds : [...toList.cardIds]
-      toCardIds.splice(action.toIndex, 0, action.cardId)
-
-      const lists = { ...board.lists }
-      lists[action.fromListId] = { ...fromList, cardIds: fromCardIds }
-      lists[action.toListId] = { ...toList, cardIds: toCardIds }
-
-      const newBoard: Board = { ...board, lists }
+      const newBoard: Board = {
+        ...board,
+        cardLabelIds: { ...board.cardLabelIds, [action.cardId]: action.labelIds },
+      }
       return { ...state, boards: { ...state.boards, [board.id]: newBoard } }
     }
     case 'ADD_LABEL': {
@@ -234,21 +175,49 @@ function reducer(state: AppState, action: Action): AppState {
       const board = state.boards[action.boardId]
       if (!board) return state
       const { [action.labelId]: _removedLabel, ...labels } = board.labels
-      const cards = { ...board.cards }
-      for (const cardId of Object.keys(cards)) {
-        if (cards[cardId].labelIds.includes(action.labelId)) {
-          cards[cardId] = {
-            ...cards[cardId],
-            labelIds: cards[cardId].labelIds.filter((id) => id !== action.labelId),
-          }
-        }
+      const cardLabelIds: Record<number, string[]> = {}
+      for (const [cardId, labelIds] of Object.entries(board.cardLabelIds)) {
+        cardLabelIds[Number(cardId)] = labelIds.filter((id) => id !== action.labelId)
       }
-      const newBoard: Board = { ...board, labels, cards }
+      const newBoard: Board = { ...board, labels, cardLabelIds }
       return { ...state, boards: { ...state.boards, [board.id]: newBoard } }
     }
     default:
       return state
   }
+}
+
+// 旧バージョン(backendId/cardLabelIds導入前)のlocalStorageデータを補完する
+function migrate(state: AppState): AppState {
+  let nextBackendId = state.nextBackendId ?? INITIAL_NEXT_BACKEND_ID
+  let changed = state.nextBackendId === undefined
+
+  const boards: Record<string, Board> = {}
+  for (const board of Object.values(state.boards)) {
+    let backendId = board.backendId
+    if (backendId === undefined) {
+      backendId = nextBackendId++
+      changed = true
+    }
+    const lists: Record<string, List> = {}
+    for (const list of Object.values(board.lists)) {
+      let listBackendId = list.backendId
+      if (listBackendId === undefined) {
+        listBackendId = nextBackendId++
+        changed = true
+      }
+      lists[list.id] = { id: list.id, backendId: listBackendId, title: list.title }
+    }
+    boards[board.id] = {
+      ...board,
+      backendId,
+      lists,
+      cardLabelIds: board.cardLabelIds ?? {},
+    }
+  }
+
+  if (!changed) return state
+  return { ...state, boards, nextBackendId }
 }
 
 interface BoardContextValue {
@@ -259,10 +228,11 @@ interface BoardContextValue {
 const BoardContext = createContext<BoardContextValue | null>(null)
 
 export function BoardProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useLocalStorage<AppState>('trello-app-state', createEmptyState)
+  const [rawState, setState] = useLocalStorage<AppState>('trello-app-state', createEmptyState)
+  const state = useMemo(() => migrate(rawState), [rawState])
 
   const dispatch = (action: Action) => {
-    setState((prev) => reducer(prev, action))
+    setState((prev) => reducer(migrate(prev), action))
   }
 
   const value = useMemo(() => ({ state, dispatch }), [state])

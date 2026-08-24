@@ -1,3 +1,9 @@
+.status {
+  padding: 4px 20px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+}
+
 .boardWrapper {
   flex: 1;
   display: flex;
