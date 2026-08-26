@@ -42,6 +42,16 @@ User: { id, email(unique), username, passwordHash }
 | POST | /api/users/logout | ログアウト（セッション破棄） |
 | GET  | /api/users/me | ログイン中のユーザー情報を取得（未ログイン時401） |
 
+### 6.2 カードAPI
+
+| メソッド | パス | 説明 |
+| --- | --- | --- |
+| GET    | /api/cards | カード一覧を取得（`boardId`, `keyword`クエリで絞り込み可） |
+| GET    | /api/cards/{id} | カード1件を取得（存在しない場合404） |
+| POST   | /api/cards | カードを新規作成（`title`必須。空の場合400） |
+| PUT    | /api/cards/{id} | カードを更新（`title`必須。対象が存在しない場合404） |
+| DELETE | /api/cards/{id} | カードを削除する。対象が存在しない場合404、成功時204を返す |
+
 ## 7. 画面構成
 
 ### 7.0 レイアウト図
