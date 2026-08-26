@@ -16,6 +16,12 @@ function isOverdue(dueDate: string): boolean {
   return new Date(dueDate) < today
 }
 
+const PRIORITY_BADGE: Record<string, { label: string; className: string }> = {
+  HIGH: { label: '高', className: styles.priorityHigh },
+  MEDIUM: { label: '中', className: styles.priorityMedium },
+  LOW: { label: '低', className: styles.priorityLow },
+}
+
 export function Card({ board, card, onOpen }: CardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: String(card.id),
@@ -48,6 +54,11 @@ export function Card({ board, card, onOpen }: CardProps) {
             </span>
           ))}
         </div>
+      )}
+      {card.priority && PRIORITY_BADGE[card.priority] && (
+        <span className={`${styles.priorityBadge} ${PRIORITY_BADGE[card.priority].className}`}>
+          優先度: {PRIORITY_BADGE[card.priority].label}
+        </span>
       )}
       <div className={styles.title}>{card.title}</div>
       {card.dueDate && (

@@ -16,6 +16,8 @@ public class CardRequest {
 
     private Double position;
 
+    private Priority priority;
+
     public String getTitle() {
         return title;
     }
@@ -62,5 +64,13 @@ public class CardRequest {
 
     public void setPosition(Double position) {
         this.position = position;
+    }
+
+    public Priority getPriority() {
+        return priority;
+    }
+
+    public void setPriority(Priority priority) {
+        this.priority = priority;
     }
 }

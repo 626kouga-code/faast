@@ -27,7 +27,7 @@ List: { id (string), backendId (number, カードのlistIdと対応), title }
 Label: { id, name, color }
 
 [バックエンドAPI: PostgreSQL "cards"テーブル]
-Card: { id, boardId, listId, title, description?, dueDate?, position }
+Card: { id, boardId, listId, title, description?, dueDate?, position, priority?(HIGH|MEDIUM|LOW) }
 
 [バックエンドAPI: PostgreSQL "users"テーブル]
 User: { id, email(unique), username, passwordHash }
@@ -88,6 +88,7 @@ User: { id, email(unique), username, passwordHash }
 
 ### 7.3 カード表示（リスト内のカード1枚）
 - ラベルバッジ（複数、色付き）をカード上部に表示する
+- 優先度が設定されている場合、「優先度: 高/中/低」のバッジを表示する（高=赤系、中=黄系、低=緑系）
 - カードタイトルを表示する
 - 期限日が設定されている場合、下部に「期限: YYYY-MM-DD」を表示する
   - 通常（期限が本日以降）: 通常テキスト表示
@@ -98,6 +99,7 @@ User: { id, email(unique), username, passwordHash }
 - タイトル入力欄（インライン編集）
 - 説明欄（複数行テキスト）
 - 期限日入力欄（date input）
+- 優先度選択欄（高・中・低、未設定も選択可）
 - ラベル選択欄（ボードのラベル一覧から複数選択、新規ラベル作成も可能）
 - 下部に削除ボタンと保存/キャンセルボタンを配置する
 
