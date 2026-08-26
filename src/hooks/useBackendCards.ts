@@ -17,7 +17,10 @@ export function useBackendCards(boardId: number) {
     setError(null)
     return listCards(boardId)
       .then((data) => setCards(data))
-      .catch(() => setError('バックエンドとの通信に失敗しました'))
+      .catch((err) => {
+        console.error('カード一覧の取得に失敗しました', err)
+        setError('バックエンドとの通信に失敗しました')
+      })
       .finally(() => setLoading(false))
   }, [boardId])
 

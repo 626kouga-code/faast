@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { createId } from '../utils/id'
 import type { AppState, Board, Label, List } from '../types'
@@ -231,11 +231,11 @@ export function BoardProvider({ children }: { children: ReactNode }) {
   const [rawState, setState] = useLocalStorage<AppState>('trello-app-state', createEmptyState)
   const state = useMemo(() => migrate(rawState), [rawState])
 
-  const dispatch = (action: Action) => {
+  const dispatch = useCallback((action: Action) => {
     setState((prev) => reducer(migrate(prev), action))
-  }
+  }, [setState])
 
-  const value = useMemo(() => ({ state, dispatch }), [state])
+  const value = useMemo(() => ({ state, dispatch }), [state, dispatch])
 
   return <BoardContext.Provider value={value}>{children}</BoardContext.Provider>
 }

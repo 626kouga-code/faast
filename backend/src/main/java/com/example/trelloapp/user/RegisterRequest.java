@@ -1,11 +1,20 @@
 package com.example.trelloapp.user;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class RegisterRequest {
 
+    @NotBlank
+    @Email
     private String email;
 
+    @NotBlank
     private String username;
 
+    @NotBlank
+    @Size(min = 8, message = "パスワードは8文字以上で入力してください")
     private String password;
 
     public String getEmail() {

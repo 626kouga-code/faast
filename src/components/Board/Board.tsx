@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   DndContext,
   PointerSensor,
@@ -52,22 +52,24 @@ export function Board({ board }: BoardProps) {
   )
 
   const query = search.trim().toLowerCase()
-  const cardsByListId: Record<number, typeof cards> = {}
-  for (const listId of board.listOrder) {
-    const list = board.lists[listId]
-    if (!list) continue
-    const listCards = cards
-      .filter((card) => card.listId === list.backendId)
-      .sort((a, b) => a.position - b.position)
-    cardsByListId[list.backendId] = query
-      ? listCards.filter(
-          (card) =>
-            card.title.toLowerCase().includes(query) ||
-            (card.description ?? '').toLowerCase().includes(query),
-        )
-      : listCards
-
-  }
+  const cardsByListId = useMemo(() => {
+    const result: Record<number, typeof cards> = {}
+    for (const listId of board.listOrder) {
+      const list = board.lists[listId]
+      if (!list) continue
+      const listCards = cards
+        .filter((card) => card.listId === list.backendId)
+        .sort((a, b) => a.position - b.position)
+      result[list.backendId] = query
+        ? listCards.filter(
+            (card) =>
+              card.title.toLowerCase().includes(query) ||
+              (card.description ?? '').toLowerCase().includes(query),
+          )
+        : listCards
+    }
+    return result
+  }, [board.listOrder, board.lists, cards, query])
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
@@ -100,7 +102,7 @@ export function Board({ board }: BoardProps) {
       let toIndex: number
 
       if (overType === 'card') {
-        const overCard = cards.find((c) => String(c.id) === String(over.id))
+        const overCard = cards.find((c) => c.id === Number(over.id))
         if (!overCard) return
         toListBackendId = overCard.listId
         const toListCards = cardsByListId[toListBackendId] ?? []
@@ -112,7 +114,10 @@ export function Board({ board }: BoardProps) {
         toIndex = (cardsByListId[toListBackendId] ?? []).length
       }
 
-      moveCard(card, toListBackendId, toIndex).catch(() => {})
+      moveCard(card, toListBackendId, toIndex).catch((err) => {
+        console.error('カードの移動に失敗しました', err)
+        alert('カードの移動に失敗しました。もう一度お試しください。')
+      })
     }
   }
 
@@ -205,6 +210,7 @@ export function Board({ board }: BoardProps) {
 
       {openCard && (
         <CardModal
+          key={openCard.id}
           board={board}
           card={openCard}
           onEdit={editCard}

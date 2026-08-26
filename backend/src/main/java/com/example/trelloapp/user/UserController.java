@@ -3,6 +3,8 @@ package com.example.trelloapp.user;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
+import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -36,7 +38,7 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         if (request.getEmail() == null || request.getEmail().isBlank()
                 || request.getUsername() == null || request.getUsername().isBlank()
                 || request.getPassword() == null || request.getPassword().isBlank()) {
@@ -63,8 +65,11 @@ public class UserController {
             SecurityContextHolder.setContext(context);
             securityContextRepository.saveContext(context, httpRequest, httpResponse);
 
-            User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
-            return ResponseEntity.ok(new UserResponse(user));
+            Optional<User> user = userRepository.findByEmail(request.getEmail());
+            if (user.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("メールアドレスまたはパスワードが違います");
+            }
+            return ResponseEntity.ok(new UserResponse(user.get()));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("メールアドレスまたはパスワードが違います");
         }
@@ -86,7 +91,10 @@ public class UserController {
                 || "anonymousUser".equals(authentication.getPrincipal())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        User user = userRepository.findByEmail(authentication.getName()).orElseThrow();
-        return ResponseEntity.ok(new UserResponse(user));
+        Optional<User> user = userRepository.findByEmail(authentication.getName());
+        if (user.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(new UserResponse(user.get()));
     }
 }

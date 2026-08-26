@@ -46,8 +46,12 @@ export function List({ board, list, cards, onOpenCard, onAddCard }: ListProps) {
       setIsAddingCard(false)
       return
     }
-    onAddCard(list.backendId, title).catch(() => {})
-    setNewCardTitle('')
+    onAddCard(list.backendId, title)
+      .then(() => setNewCardTitle(''))
+      .catch((err) => {
+        console.error('カードの追加に失敗しました', err)
+        alert('カードの追加に失敗しました。もう一度お試しください。')
+      })
   }
 
   const handleRenameList = () => {

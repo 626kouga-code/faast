@@ -69,8 +69,7 @@ public class CardService {
     }
 
     private double nextPosition(Long boardId, Long listId) {
-        return cardRepository.findByBoardIdAndListIdOrderByPositionDesc(boardId, listId).stream()
-                .findFirst()
+        return cardRepository.findTopByBoardIdAndListIdOrderByPositionDesc(boardId, listId)
                 .map(c -> c.getPosition() != null ? c.getPosition() + 1 : 1.0)
                 .orElse(1.0);
     }
