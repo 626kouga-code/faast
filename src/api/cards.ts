@@ -1,3 +1,5 @@
+export type Priority = 'HIGH' | 'MEDIUM' | 'LOW'
+
 export interface ApiCard {
   id: number
   boardId: number
@@ -6,6 +8,7 @@ export interface ApiCard {
   description: string | null
   dueDate: string | null
   position: number
+  priority: Priority | null
 }
 
 export interface CardPayload {
@@ -15,6 +18,7 @@ export interface CardPayload {
   boardId: number
   listId: number
   position?: number
+  priority?: Priority | null
 }
 
 async function handle(res: Response): Promise<ApiCard> {

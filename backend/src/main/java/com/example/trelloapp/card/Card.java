@@ -1,6 +1,8 @@
 package com.example.trelloapp.card;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -27,6 +29,9 @@ public class Card {
     private LocalDate dueDate;
 
     private Double position;
+
+    @Enumerated(EnumType.STRING)
+    private Priority priority;
 
     public Card() {
     }
@@ -85,5 +90,13 @@ public class Card {
 
     public void setPosition(Double position) {
         this.position = position;
+    }
+
+    public Priority getPriority() {
+        return priority;
+    }
+
+    public void setPriority(Priority priority) {
+        this.priority = priority;
     }
 }

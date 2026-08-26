@@ -43,6 +43,7 @@ public class CardService {
         card.setBoardId(req.getBoardId());
         card.setListId(req.getListId());
         card.setPosition(req.getPosition() != null ? req.getPosition() : nextPosition(req.getBoardId(), req.getListId()));
+        card.setPriority(req.getPriority());
         return cardRepository.save(card);
     }
 
@@ -54,6 +55,7 @@ public class CardService {
             card.setBoardId(req.getBoardId());
             card.setListId(req.getListId());
             card.setPosition(req.getPosition() != null ? req.getPosition() : card.getPosition());
+            card.setPriority(req.getPriority());
             return cardRepository.save(card);
         });
     }

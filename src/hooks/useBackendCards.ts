@@ -35,7 +35,10 @@ export function useBackendCards(boardId: number) {
   )
 
   const editCard = useCallback(
-    async (card: ApiCard, changes: Partial<Pick<ApiCard, 'title' | 'description' | 'dueDate'>>) => {
+    async (
+      card: ApiCard,
+      changes: Partial<Pick<ApiCard, 'title' | 'description' | 'dueDate' | 'priority'>>,
+    ) => {
       const updated = await apiUpdateCard(card.id, {
         title: changes.title ?? card.title,
         description: changes.description ?? card.description,
@@ -43,6 +46,7 @@ export function useBackendCards(boardId: number) {
         boardId: card.boardId,
         listId: card.listId,
         position: card.position,
+        priority: changes.priority !== undefined ? changes.priority : card.priority,
       })
       setCards((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
       return updated
@@ -79,6 +83,7 @@ export function useBackendCards(boardId: number) {
         boardId: card.boardId,
         listId: toListId,
         position: newPosition,
+        priority: card.priority,
       })
       setCards((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
       return updated
