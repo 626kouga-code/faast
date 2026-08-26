@@ -1,9 +1,11 @@
+import { AuthProvider, useAuth } from './context/AuthContext'
 import { BoardProvider, useBoardContext } from './context/BoardContext'
+import { AuthPage } from './components/Auth/AuthPage'
 import { Sidebar } from './components/Sidebar/Sidebar'
 import { Board } from './components/Board/Board'
 import styles from './App.module.css'
 
-function AppContent() {
+function BoardApp() {
   const { state } = useBoardContext()
   const activeBoard = state.activeBoardId ? state.boards[state.activeBoardId] : null
 
@@ -19,10 +21,23 @@ function AppContent() {
   )
 }
 
-export default function App() {
+function AppContent() {
+  const { user, loading } = useAuth()
+
+  if (loading) return null
+  if (!user) return <AuthPage />
+
   return (
     <BoardProvider>
-      <AppContent />
+      <BoardApp />
     </BoardProvider>
+  )
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   )
 }
