@@ -70,6 +70,39 @@
   margin-top: auto;
 }
 
+.account {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid #2c3947;
+}
+
+.accountName {
+  font-size: 13px;
+  color: #9fb3c8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logoutButton {
+  background: transparent;
+  border: 1px solid #2c3947;
+  color: #9fb3c8;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.logoutButton:hover {
+  color: #eb5a46;
+  border-color: #eb5a46;
+}
+
 .addBoard input {
   flex: 1;
   min-width: 0;

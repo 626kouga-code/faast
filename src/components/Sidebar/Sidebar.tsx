@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { useAuth } from '../../context/AuthContext'
 import { useBoardContext } from '../../context/BoardContext'
 import styles from './Sidebar.module.css'
 
 export function Sidebar() {
+  const { user, logout } = useAuth()
   const { state, dispatch } = useBoardContext()
   const [newBoardTitle, setNewBoardTitle] = useState('')
 
@@ -54,6 +56,12 @@ export function Sidebar() {
           }}
         />
         <button onClick={handleAddBoard}>追加</button>
+      </div>
+      <div className={styles.account}>
+        <span className={styles.accountName}>{user?.username}</span>
+        <button className={styles.logoutButton} onClick={() => logout()}>
+          ログアウト
+        </button>
       </div>
     </aside>
   )

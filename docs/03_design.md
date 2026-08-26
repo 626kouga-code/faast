@@ -4,23 +4,43 @@
 > 関連ドキュメント: [概要・目的・対象ユーザー](./01_overview.md) | [非機能・機能要件](./02_requirements.md) | [スコープ外・拡張候補](./04_scope.md)
 
 ## 6. データモデル
+
+ボード/リスト/ラベルはフロントのlocalStorageで管理し、カード本体はバックエンドAPI（PostgreSQL）で管理する。両者は`backendId`（数値）で対応付ける。
+
 ```
+[localStorage: AppState]
 AppState
 ├─ boards: Record<boardId, Board>
 ├─ boardOrder: boardId[]
-└─ activeBoardId: string | null
+├─ activeBoardId: string | null
+└─ nextBackendId: number  // Board/ListのbackendId採番カウンタ
 
 Board
-├─ id, title
+├─ id (string, ローカルUUID), backendId (number, カードのboardIdと対応)
+├─ title
 ├─ lists: Record<listId, List>
 ├─ listOrder: listId[]
-├─ cards: Record<cardId, Card>
-└─ labels: Record<labelId, Label>
+├─ labels: Record<labelId, Label>
+└─ cardLabelIds: Record<cardId(number), labelId[]>  // カードへのラベル割り当て
 
-List: { id, title, cardIds: cardId[] }
-Card: { id, title, description?, labelIds: labelId[], dueDate? }
+List: { id (string), backendId (number, カードのlistIdと対応), title }
 Label: { id, name, color }
+
+[バックエンドAPI: PostgreSQL "cards"テーブル]
+Card: { id, boardId, listId, title, description?, dueDate?, position }
+
+[バックエンドAPI: PostgreSQL "users"テーブル]
+User: { id, email(unique), username, passwordHash }
 ```
+
+### 6.1 認証API
+
+| メソッド | パス | 説明 |
+| --- | --- | --- |
+| POST | /api/users/register | ユーザー新規登録（email, username, password） |
+| POST | /api/users/login | ログイン（email, password）。成功時セッションCookieを発行 |
+| POST | /api/users/logout | ログアウト（セッション破棄） |
+| GET  | /api/users/me | ログイン中のユーザー情報を取得（未ログイン時401） |
 
 ## 7. 画面構成
 
@@ -80,3 +100,9 @@ Label: { id, name, color }
 - 期限日入力欄（date input）
 - ラベル選択欄（ボードのラベル一覧から複数選択、新規ラベル作成も可能）
 - 下部に削除ボタンと保存/キャンセルボタンを配置する
+
+### 7.5 ログイン・新規登録画面
+- 未ログイン時に画面全体に表示され、ボード画面へはアクセスできない
+- メールアドレス・パスワード入力欄（新規登録時はユーザー名入力欄も表示）
+- 「ログイン」「新規登録」ボタンで画面を切り替えられる
+- サイドバー下部にログイン中のユーザー名とログアウトボタンを表示する
