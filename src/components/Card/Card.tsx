@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { ApiCard } from '../../api/cards'
+import type { ApiCard, Priority } from '../../api/cards'
 import type { Board } from '../../types'
 import styles from './Card.module.css'
 
@@ -16,7 +16,7 @@ function isOverdue(dueDate: string): boolean {
   return new Date(dueDate) < today
 }
 
-const PRIORITY_BADGE: Record<string, { label: string; className: string }> = {
+const PRIORITY_BADGE: Record<Priority, { label: string; className: string }> = {
   HIGH: { label: '高', className: styles.priorityHigh },
   MEDIUM: { label: '中', className: styles.priorityMedium },
   LOW: { label: '低', className: styles.priorityLow },

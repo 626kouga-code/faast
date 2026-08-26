@@ -37,8 +37,12 @@ export function CardModal({ board, card, onEdit, onRemove, onClose }: CardModalP
       description: description.trim() || null,
       dueDate: dueDate || null,
       priority: priority || null,
-    }).catch(() => {})
-    onClose()
+    })
+      .then(onClose)
+      .catch((err) => {
+        console.error('カードの保存に失敗しました', err)
+        alert('カードの保存に失敗しました。もう一度お試しください。')
+      })
   }
 
   const handleToggleLabel = (labelId: string) => {
@@ -50,8 +54,12 @@ export function CardModal({ board, card, onEdit, onRemove, onClose }: CardModalP
 
   const handleDelete = () => {
     if (confirm('このカードを削除しますか？')) {
-      onRemove(card).catch(() => {})
-      onClose()
+      onRemove(card)
+        .then(onClose)
+        .catch((err) => {
+          console.error('カードの削除に失敗しました', err)
+          alert('カードの削除に失敗しました。もう一度お試しください。')
+        })
     }
   }
 
