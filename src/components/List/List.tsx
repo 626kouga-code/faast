@@ -4,10 +4,21 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { useBoardContext } from '../../context/BoardContext'
-import type { ApiCard } from '../../api/cards'
+import type { ApiCard, Priority } from '../../api/cards'
 import { Card } from '../Card/Card'
 import type { Board, List as ListType } from '../../types'
 import styles from './List.module.css'
+
+const PRIORITY_ORDER: Record<Priority, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 }
+
+function sortByPriorityThenPosition(cards: ApiCard[]): ApiCard[] {
+  return [...cards].sort((a, b) => {
+    const rankA = a.priority ? PRIORITY_ORDER[a.priority] : 3
+    const rankB = b.priority ? PRIORITY_ORDER[b.priority] : 3
+    if (rankA !== rankB) return rankA - rankB
+    return a.position - b.position
+  })
+}
 
 interface ListProps {
   board: Board
@@ -23,6 +34,9 @@ export function List({ board, list, cards, onOpenCard, onAddCard }: ListProps) {
   const [newCardTitle, setNewCardTitle] = useState('')
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState(list.title)
+  const [sortByPriority, setSortByPriority] = useState(false)
+
+  const displayCards = sortByPriority ? sortByPriorityThenPosition(cards) : cards
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: list.id,
@@ -82,6 +96,14 @@ export function List({ board, list, cards, onOpenCard, onAddCard }: ListProps) {
           </span>
         )}
         <button
+          className={styles.sortButton}
+          aria-pressed={sortByPriority}
+          title="優先度順に並べ替え"
+          onClick={() => setSortByPriority((prev) => !prev)}
+        >
+          {sortByPriority ? '優先度順' : '並べ替え'}
+        </button>
+        <button
           className={styles.deleteListButton}
           onClick={() => {
             if (confirm(`「${list.title}」を削除しますか？`)) {
@@ -94,8 +116,11 @@ export function List({ board, list, cards, onOpenCard, onAddCard }: ListProps) {
       </div>
 
       <div ref={setDroppableRef} className={styles.cards}>
-        <SortableContext items={cards.map((c) => String(c.id))} strategy={verticalListSortingStrategy}>
-          {cards.map((card) => (
+        <SortableContext
+          items={displayCards.map((c) => String(c.id))}
+          strategy={verticalListSortingStrategy}
+        >
+          {displayCards.map((card) => (
             <Card key={card.id} board={board} card={card} onOpen={() => onOpenCard(card.id)} />
           ))}
         </SortableContext>
