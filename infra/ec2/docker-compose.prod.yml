@@ -1,0 +1,18 @@
+services:
+  backend:
+    image: trello-app-backend:latest
+    container_name: trello-app-backend
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${RDS_ENDPOINT}/trello_app
+      SPRING_DATASOURCE_USERNAME: trello_user
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+
+  nginx:
+    image: trello-app-nginx:latest
+    container_name: trello-app-nginx
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"

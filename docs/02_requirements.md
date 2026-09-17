@@ -49,6 +49,7 @@
 | バージョン管理システム | Git / GitHub | - |
 | コンテナ        | Docker Compose（PostgreSQL起動用） | - |
 | 実行環境        | Node.js | 24.19.0 |
+| デプロイ先       | AWS（EC2 + RDS、Terraformでインフラ管理）。詳細は[README.mdのAWSデプロイ](../README.md#awsデプロイ)を参照 | - |
 
 
 ### 4.2 その他非機能要件
