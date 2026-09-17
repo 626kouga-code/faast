@@ -74,10 +74,24 @@ npm run build
 │   ├── hooks/            # バックエンドAPI連携フック（useBackendCards 等）
 │   └── api/              # バックエンドAPIクライアント
 ├── backend/             # バックエンド（Java / Spring Boot）
+│   ├── Dockerfile        # バックエンドのコンテナイメージ定義
 │   └── src/main/java/com/example/trelloapp/card/  # カードのController/Service/Repository
+├── infra/               # AWSデプロイ関連（詳細は下記「AWSデプロイ」参照）
+│   ├── terraform/        # インフラ定義（EC2, RDS, ネットワーク）
+│   ├── nginx/            # nginxのDockerfile・設定（フロント配信 + APIリバースプロキシ）
+│   ├── ec2/               # EC2上で使うdocker-compose定義
+│   └── deploy.ps1        # ビルド〜デプロイ〜疎通確認までを1コマンドで行うスクリプト
 ├── docs/                # 要件定義書（4分割）
-└── docker-compose.yml   # PostgreSQL起動用
+└── docker-compose.yml   # PostgreSQL起動用（ローカル開発用）
 ```
+
+## AWSデプロイ
+
+AWS CLI/Terraformを使い、AWSマネジメントコンソールを使わずにインフラをコードで管理している。
+
+- 構成: EC2 1台（無料枠 t3.micro）上でDocker Composeにより`nginx`（フロントエンド配信 + `/api`をbackendへリバースプロキシ）と`backend`(Spring Boot)を起動。DBは別途RDS PostgreSQLを利用し、EC2のセキュリティグループからのみ接続を許可（パブリックアクセスなし）
+- インフラのコード本体は[infra/terraform/](./infra/terraform/)を参照（設定値は変更されうるため、ここでは詳細を記載しない）
+- デプロイは`./infra/deploy.ps1`を実行するだけで、ビルド・EC2への転送・コンテナ起動・疎通確認までを自動で行う
 
 ## 開発ルール
 
